@@ -22,6 +22,7 @@ use React\Dns\Resolver\Resolver;
 use React\EventLoop\Factory as EventLoopFactory;
 use React\EventLoop\LoopInterface;
 use React\Promise\PromiseInterface;
+use Throwable;
 
 class LocalDns
 {
@@ -53,10 +54,9 @@ class LocalDns
         $this->executor = new HostsFileExecutor($hosts, new RoundRobinExecutor($nameservers, $this->loop));
         $this->resolver = new Resolver($this->executor);
 
-        $this
-            ->createServer()
-            ->then($this->createHandler())
-            ->otherwise($this->createErrorHandler());
+        $this->createServer()
+            ->then(Closure::fromCallable([$this, 'handle']))
+            ->otherwise(Closure::fromCallable([$this, 'handleException']));
     }
 
     private function createServer($address = '0.0.0.0:53'): PromiseInterface
@@ -64,55 +64,50 @@ class LocalDns
         return (new DatagramFactory($this->loop, $this->resolver))->createServer($address);
     }
 
-    private function createHandler(): Closure
+    private function handle(Socket $server): void
     {
-        return function (Socket $server) {
-            $this->logger->info('then', func_get_args());
-
-            $server->on(
-                'message',
-                function ($data, $clientAddress, Socket $server) {
-                    $message = $this->protoParser->parseMessage($data);
-                    $this->logger->info(
-                        'DNS query from {client}',
-                        ['client' => $clientAddress, 'data' => $message]
-                    );
-
-                    $messageId = $message->id;
-
-                    foreach ($message->questions as $query) {
-                        $this->executor->query($query)->then(
-                            function (Message $message) use ($query, $messageId, $server, $clientAddress) {
-                                $this->logger->info(
-                                    'Resolved',
-                                    [
-                                        'query' => $query,
-                                        'message' => $message,
-                                        'rest' => func_get_args(),
-                                    ]
-                                );
-
-                                $message->id = $messageId;
-                                $server->send($this->protoDumper->toBinary($message), $clientAddress);
-                            }
-                        );
-                    }
-                }
-            );
-        };
+        $this->logger->info('then', func_get_args());
+        $server->on('message', Closure::fromCallable([$this, 'handleMessage']));
     }
 
-    private function createErrorHandler(): Closure
+    private function handleException(Throwable $exception): void
     {
-        return function () {
-            $this->logger->error('otherwise', func_get_args());
-        };
+        $this->logger->error('otherwise', func_get_args());
     }
 
     public static function run(?string $hostsFilePath = null, array $nameservers = [], bool $override = false): void
     {
         $dns = new self($hostsFilePath, $nameservers, $override);
         $dns->loop->run();
+    }
+
+    private function handleMessage($data, $clientAddress, Socket $server): void
+    {
+        $message = $this->protoParser->parseMessage($data);
+        $this->logger->info(
+            'DNS query from {client}',
+            ['client' => $clientAddress, 'data' => $message]
+        );
+
+        $messageId = $message->id;
+
+        foreach ($message->questions as $query) {
+            $this->executor->query($query)->then(
+                function (Message $message) use ($query, $messageId, $server, $clientAddress) {
+                    $this->logger->info(
+                        'Resolved',
+                        [
+                            'query' => $query,
+                            'message' => $message,
+                            'rest' => func_get_args(),
+                        ]
+                    );
+
+                    $message->id = $messageId;
+                    $server->send($this->protoDumper->toBinary($message), $clientAddress);
+                }
+            );
+        }
     }
 
 }
