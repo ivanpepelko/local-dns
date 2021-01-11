@@ -17,6 +17,7 @@
         "php": "^7.4 | ^8",
         "react/dns": "^1.4",
         "react/datagram": "^1.5",
-        "monolog/monolog": "^2.2"
+        "monolog/monolog": "^2.2",
+        "symfony/console": "^5.2"
     }
 }

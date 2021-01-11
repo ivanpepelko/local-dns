@@ -32,12 +32,12 @@ class LocalDns
     private HostsFileExecutor $executor;
     private Resolver $resolver;
 
-    public function __construct(array $nameservers = [], bool $override = false)
+    public function __construct(?string $hostsFilePath = null, array $nameservers = [], bool $override = false)
     {
         $this->loop = EventLoopFactory::create();
         $this->logger = new Logger(
             'local-dns',
-            [new StreamHandler(STDOUT) /*, new SyslogHandler('local-dns')*/],
+            [new StreamHandler(STDOUT)],
             [new ProcessIdProcessor(), new MemoryUsageProcessor(), new MemoryPeakUsageProcessor(), new PsrLogMessageProcessor()]
         );
         $this->protoParser = new Parser();
@@ -48,7 +48,7 @@ class LocalDns
             $nameservers = array_merge($config->nameservers, $nameservers);
         }
 
-        $hosts = HostsFile::loadFromPathBlocking();
+        $hosts = HostsFile::loadFromPathBlocking($hostsFilePath);
 
         $this->executor = new HostsFileExecutor($hosts, new RoundRobinExecutor($nameservers, $this->loop));
         $this->resolver = new Resolver($this->executor);
@@ -109,9 +109,9 @@ class LocalDns
         };
     }
 
-    public static function run(): void
+    public static function run(?string $hostsFilePath = null, array $nameservers = [], bool $override = false): void
     {
-        $dns = new self();
+        $dns = new self($hostsFilePath, $nameservers, $override);
         $dns->loop->run();
     }
 
