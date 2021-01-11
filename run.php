@@ -43,14 +43,16 @@ require_once __DIR__ . '/vendor/autoload.php';
         $nameservers = $input->getOption('ns');
         $override = $input->getOption('override-ns');
 
-        if (!is_readable($hostsFile)) {
-            $output->writeln('<error>Provided hosts file is not readable</error>');
-            return 1;
-        }
+        if ($hostsFile !== null) {
+            if (!is_readable($hostsFile)) {
+                $output->writeln('<error>Provided hosts file is not readable</error>');
+                return 1;
+            }
 
-        if (!is_file($hostsFile)) {
-            $output->writeln('<error>Provided hosts file is not regular file</error>');
-            return 1;
+            if (!is_file($hostsFile)) {
+                $output->writeln('<error>Provided hosts file is not regular file</error>');
+                return 1;
+            }
         }
 
         if ($override && !$nameservers) {
