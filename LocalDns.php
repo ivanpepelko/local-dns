@@ -33,7 +33,7 @@ class LocalDns
     private HostsFileExecutor $executor;
     private Resolver $resolver;
 
-    public function __construct(?string $hostsFilePath = null, array $nameservers = [], bool $override = false)
+    public function __construct(string $address, ?string $hostsFilePath = null, array $nameservers = [], bool $override = false)
     {
         $this->loop = EventLoopFactory::create();
         $this->logger = new Logger(
@@ -54,12 +54,12 @@ class LocalDns
         $this->executor = new HostsFileExecutor($hosts, new RoundRobinExecutor($nameservers, $this->loop));
         $this->resolver = new Resolver($this->executor);
 
-        $this->createServer()
+        $this->createServer($address)
             ->then(Closure::fromCallable([$this, 'handle']))
             ->otherwise(Closure::fromCallable([$this, 'handleException']));
     }
 
-    private function createServer($address = '0.0.0.0:53'): PromiseInterface
+    private function createServer(string $address): PromiseInterface
     {
         return (new DatagramFactory($this->loop, $this->resolver))->createServer($address);
     }
@@ -75,10 +75,9 @@ class LocalDns
         $this->logger->error('otherwise', func_get_args());
     }
 
-    public static function run(?string $hostsFilePath = null, array $nameservers = [], bool $override = false): void
+    public static function run(string $address, ?string $hostsFilePath = null, array $nameservers = [], bool $override = false): void
     {
-        $dns = new self($hostsFilePath, $nameservers, $override);
-        $dns->loop->run();
+        (new self($address, $hostsFilePath, $nameservers, $override))->loop->run();
     }
 
     private function handleMessage($data, $clientAddress, Socket $server): void

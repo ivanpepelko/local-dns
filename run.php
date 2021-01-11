@@ -2,6 +2,7 @@
 <?php
 
 use Aperture\LocalDns\LocalDns;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -34,11 +35,13 @@ require_once __DIR__ . '/vendor/autoload.php';
                 'o',
                 InputOption::VALUE_NONE,
                 'If set, /etc/resolv.conf nameservers will not be used (only nameservers defined by <info>--ns</info> option)'
-            );
+            )
+            ->addArgument('address', InputArgument::OPTIONAL, 'Listen address', '0.0.0.0:53');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $address = $input->getArgument('address');
         $hostsFile = $input->getOption('hosts-file');
         $nameservers = $input->getOption('ns');
         $override = $input->getOption('override-ns');
@@ -60,7 +63,7 @@ require_once __DIR__ . '/vendor/autoload.php';
             $override = false;
         }
 
-        LocalDns::run($hostsFile, $nameservers, $override);
+        LocalDns::run($address, $hostsFile, $nameservers, $override);
 
         return 0;
     }
