@@ -4,7 +4,6 @@ namespace Aperture\LocalDns;
 
 use Closure;
 use Monolog\Handler\StreamHandler;
-use Monolog\Handler\SyslogHandler;
 use Monolog\Logger;
 use Monolog\Processor\MemoryPeakUsageProcessor;
 use Monolog\Processor\MemoryUsageProcessor;
@@ -19,9 +18,6 @@ use React\Dns\Model\Message;
 use React\Dns\Protocol\BinaryDumper;
 use React\Dns\Protocol\Parser;
 use React\Dns\Query\HostsFileExecutor;
-use React\Dns\Query\SelectiveTransportExecutor;
-use React\Dns\Query\TcpTransportExecutor;
-use React\Dns\Query\UdpTransportExecutor;
 use React\Dns\Resolver\Resolver;
 use React\EventLoop\Factory as EventLoopFactory;
 use React\EventLoop\LoopInterface;
@@ -36,26 +32,25 @@ class LocalDns
     private HostsFileExecutor $executor;
     private Resolver $resolver;
 
-    public function __construct()
+    public function __construct(array $nameservers = [], bool $override = false)
     {
         $this->loop = EventLoopFactory::create();
         $this->logger = new Logger(
             'local-dns',
-            [new StreamHandler(STDOUT), new SyslogHandler('local-dns')],
+            [new StreamHandler(STDOUT) /*, new SyslogHandler('local-dns')*/],
             [new ProcessIdProcessor(), new MemoryUsageProcessor(), new MemoryPeakUsageProcessor(), new PsrLogMessageProcessor()]
         );
         $this->protoParser = new Parser();
         $this->protoDumper = new BinaryDumper();
 
-        $config = Config::loadSystemConfigBlocking();
+        if (!$override) {
+            $config = Config::loadSystemConfigBlocking();
+            $nameservers = array_merge($config->nameservers, $nameservers);
+        }
+
         $hosts = HostsFile::loadFromPathBlocking();
 
-        $executor = new SelectiveTransportExecutor(
-            new UdpTransportExecutor($config->nameservers[0], $this->loop),
-            new TcpTransportExecutor($config->nameservers[0], $this->loop)
-        );
-
-        $this->executor = new HostsFileExecutor($hosts, $executor);
+        $this->executor = new HostsFileExecutor($hosts, new RoundRobinExecutor($nameservers, $this->loop));
         $this->resolver = new Resolver($this->executor);
 
         $this
