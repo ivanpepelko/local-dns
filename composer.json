@@ -8,7 +8,13 @@
             "email": "ivan.pepelko@gmail.com"
         }
     ],
+    "autoload": {
+        "psr-4": {
+            "Aperture\\LocalDns\\": ""
+        }
+    },
     "require": {
+        "php": "^7.4 | ^8",
         "react/dns": "^1.4",
         "react/datagram": "^1.5",
         "monolog/monolog": "^2.2"
