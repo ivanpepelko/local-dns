@@ -13,10 +13,9 @@ require_once __DIR__ . '/vendor/autoload.php';
 (new class extends SingleCommandApplication {
     protected static $defaultName = 'local-dns';
 
-    protected function configure()
+    protected function configure(): void
     {
-        $this
-            ->setVersion('1.0.0-beta')
+        $this->setVersion('1.0.0-beta')
             ->addOption(
                 'hosts-file',
                 null,
@@ -39,7 +38,7 @@ require_once __DIR__ . '/vendor/autoload.php';
             ->addArgument('address', InputArgument::OPTIONAL, 'Listen address', '0.0.0.0:53');
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $address = $input->getArgument('address');
         $hostsFile = $input->getOption('hosts-file');
