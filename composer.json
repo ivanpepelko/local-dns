@@ -1,0 +1,16 @@
+{
+    "name": "ivanpepelko/local-dns",
+    "type": "project",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Ivan Pepelko",
+            "email": "ivan.pepelko@gmail.com"
+        }
+    ],
+    "require": {
+        "react/dns": "^1.4",
+        "react/datagram": "^1.5",
+        "monolog/monolog": "^2.2"
+    }
+}
