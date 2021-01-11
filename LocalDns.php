@@ -36,6 +36,9 @@ class LocalDns
     public function __construct(string $address, ?string $hostsFilePath = null, array $nameservers = [], bool $override = false)
     {
         $this->loop = EventLoopFactory::create();
+
+        $this->installSignalHandlers();
+
         $this->logger = new Logger(
             'local-dns',
             [new StreamHandler(STDOUT)],
@@ -107,6 +110,18 @@ class LocalDns
                 }
             );
         }
+    }
+
+    private function installSignalHandlers(): void
+    {
+        // SIGTERM -> docker stop signal
+
+        $this->loop->addSignal(
+            SIGTERM,
+            function () {
+                $this->loop->stop();
+            }
+        );
     }
 
 }

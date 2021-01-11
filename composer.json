@@ -15,6 +15,7 @@
     },
     "require": {
         "php": "^7.4 | ^8",
+        "ext-pcntl": "*",
         "react/dns": "^1.4",
         "react/datagram": "^1.5",
         "monolog/monolog": "^2.2",
