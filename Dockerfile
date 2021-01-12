@@ -10,5 +10,5 @@ RUN wget https://raw.githubusercontent.com/composer/getcomposer.org/76a7060ccb93
 RUN rm -f composer.lock
 RUN php composer.phar install --optimize-autoloader --prefer-dist
 
-EXPOSE 53
+EXPOSE 53/udp
 ENTRYPOINT /app/run.php
