@@ -4,7 +4,7 @@ services:
   local-dns:
     build:
       context: .
-    image: jarvis:5000/aperture:local-dns
+    image: jarvis:5000/aperture/local-dns
     restart: always
     deploy:
       replicas: 2
