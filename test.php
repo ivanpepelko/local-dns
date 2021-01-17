@@ -7,7 +7,7 @@ $loop = React\EventLoop\Factory::create();
 $config = React\Dns\Config\Config::loadSystemConfigBlocking();
 
 $factory = new React\Dns\Resolver\Factory();
-$dns = $factory->create('127.0.0.1', $loop);
+$dns = $factory->create('192.168.1.200', $loop);
 
 $domains = ['www.google.com', 'google.com', 'archlinux.net'];
 
