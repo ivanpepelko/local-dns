@@ -6,11 +6,15 @@ services:
       context: .
     image: jarvis:5000/aperture/local-dns
     restart: always
+    volumes:
+      - /etc/hosts:/etc/hosts.system
+    entrypoint: /app/run.php --hosts-file /etc/hosts.system
+    ports:
+      - 0.0.0.0:53:53/udp
     deploy:
       replicas: 2
       update_config:
         parallelism: 1
-        delay: 10s
+        delay: 15s
         failure_action: rollback
         order: start-first
-    network_mode: host
